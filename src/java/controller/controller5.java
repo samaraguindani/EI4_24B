@@ -1,5 +1,6 @@
 package controller;
 
+import model.Usuario;
 import jakarta.servlet.RequestDispatcher;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,8 +11,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import static java.lang.System.out;
-import java.util.HashMap;
+import model.UserDao;
+
 
 @WebServlet(name = "Controller5", urlPatterns = {"/controller5", "/ex5/login5"})
 public class controller5 extends HttpServlet {
@@ -38,54 +39,68 @@ public class controller5 extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         String action = request.getServletPath();
+        Usuario usuario = new Usuario();
+        
+        String user = (String) request.getParameter("user");
+        String pass = (String) request.getParameter("pass");
+            if (action.equals("/ex5/login5")) {
+           
+               usuario.setUsername(user);
+               usuario.setPassword(pass);
 
-        if (action.equals("/ex5/login5")) {
+               if (UserDao.salvar(usuario) == 1) {
+                   RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/index.jsp");
+                    PrintWriter out = response.getWriter();
+                    out.println("<font color=green>Cadastrado com sucesso</font>");
+                    dispatcher.include(request, response);
+               } else {
+                   RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/index.jsp");
+                    PrintWriter out = response.getWriter();
+                    out.println("<font color=red>Erro ao cadastrar</font>");
+                    dispatcher.include(request, response);
+               }
 
-            String user = (String) request.getParameter("user");
-            String pass = (String) request.getParameter("pass");
+                if (user.equals("admin") && pass.equals("admin")) {
 
-            if (user.equals("admin") && pass.equals("admin")) {
+                    HttpSession session = request.getSession(false);
+                    session.setAttribute("user", user);
+                    session.setAttribute("pass", pass);
 
-                HttpSession session = request.getSession(false);
-                session.setAttribute("user", user);
-                session.setAttribute("pass", pass);
+                    Cookie my_cookie = null;
+                    Cookie[] my_cookies = null;
+                    String page = "";
 
-                Cookie my_cookie = null;
-                Cookie[] my_cookies = null;
-                String page = "";
-                
-                my_cookies = request.getCookies();
+                    my_cookies = request.getCookies();
 
-                for (int i = 0; i < my_cookies.length; i++) {
-                    my_cookie = my_cookies[i];
+                    for (int i = 0; i < my_cookies.length; i++) {
+                        my_cookie = my_cookies[i];
 
-                    if (my_cookie.getValue().equals("sim")) {
-                        page = my_cookie.getName();
+                        if (my_cookie.getValue().equals("sim")) {
+                            page = my_cookie.getName();
+                        }
                     }
+
+                    if(page.equals("")){
+                        RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/tela5.jsp");
+                        dispatcher.forward(request, response);
+                    }else{
+                        System.out.println("/ex5/cama/"+page+".jsp");
+                        RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/cama/"+page+".jsp");
+                        dispatcher.forward(request, response);
+
+                    }
+                } else {
+
+                    RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/index.jsp");
+                    PrintWriter out = response.getWriter();
+                    out.println("<font color=red>Either user or password is wrong.</font>");
+                    dispatcher.include(request, response);
+
                 }
-
-                if(page.equals("")){
-                    RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/tela5.jsp");
-                    dispatcher.forward(request, response);
-                }else{
-                    System.out.println("/ex5/cama/"+page+".jsp");
-                    RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/cama/"+page+".jsp");
-                    dispatcher.forward(request, response);
-                    
-                }
-            } else {
-
-                RequestDispatcher dispatcher = request.getRequestDispatcher("/ex5/index.jsp");
-                PrintWriter out = response.getWriter();
-                out.println("<font color=red>Either user or password is wrong.</font>");
-                dispatcher.include(request, response);
-
-            }
-        } 
+            } 
     }
 
     @Override
